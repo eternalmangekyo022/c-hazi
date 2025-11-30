@@ -1,107 +1,63 @@
-#include "game.h"
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
+#include "game.h"
+#include "ui.h"
+#include "parancs.h"
+#include "history.h"
 #include "debugmalloc.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
 
-// ANSI szinek
-#define SZIN_RESET "\033[0m"
-#define SZIN_CYAN "\033[36m"
-#define SZIN_SARGA "\033[33m"
-#define SZIN_PIROS "\033[31m"
-#define SZIN_ZOLD "\033[32m"
-
-void kepernyo_torol() {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
-}
-
-//tabla vizualizalasa
-void tabla_kiir(Cella** tabla, int rows, int cols, int mutasd_bombakat) {
-    // oszlopok szamai cyannal
-    for (int j = 0; j < cols; j++) {
-        printf(SZIN_CYAN "%2d " SZIN_RESET, j);
-    }
-    printf("\n");
-    
-    for (int i = 0; i < rows; i++) {
-        // sor szama cyannal
-        printf(SZIN_CYAN "%2d " SZIN_RESET, i);
-        for (int j = 0; j < cols; j++) {
-            if (tabla[i][j].isOpen) {
-                if (tabla[i][j].isBomb) {
-                    printf(SZIN_PIROS " B " SZIN_RESET);
-                } else if (tabla[i][j].around == 0) {
-                    printf("   ");
-                } else {
-                    // szamok zolddel
-                    printf(SZIN_ZOLD " %d " SZIN_RESET, tabla[i][j].around);
-                }
-            } else if (tabla[i][j].isFlagged) {
-                printf(SZIN_SARGA " * " SZIN_RESET);
-            } else {
-                if (mutasd_bombakat && tabla[i][j].isBomb) {
-                    printf(SZIN_PIROS " B " SZIN_RESET);
-                } else {
-                    printf(" x ");
-                }
-            }
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
-//cella megnyitasa. ha bomba vege, ha flag vagy mar nyitva van semmi nem tortenik
+// ez a fuggveny megnyit egy adott mezot, ha nem letezik 0 a ret erteke.
+// ha bomba, visszater -1 el.
+// ha nem bomba szo szerint meg is nyitja, es a korulotte levo mezoket amik nem bombak
+// megnyitja rekurzivan
 int megnyit(Cella** tabla, int sor, int oszl, int rows, int cols) {
     if (sor < 0 || sor >= rows || oszl < 0 || oszl >= cols) {
         return 0;
     }
-    
+
     if (tabla[sor][oszl].isOpen || tabla[sor][oszl].isFlagged) {
         return 0;
     }
-    
+
     tabla[sor][oszl].isOpen = 1;
-    
+
     if (tabla[sor][oszl].isBomb) {
         return -1;
     }
-    
+
     if (tabla[sor][oszl].around == 0) {
-        for (int sor_valtozas = -1; sor_valtozas <= 1; sor_valtozas++) {
-            for (int oszlop_valtozas = -1; oszlop_valtozas <= 1; oszlop_valtozas++) {
-                if (sor_valtozas == 0 && oszlop_valtozas == 0) continue;
-                int uj_sor = sor + sor_valtozas;
-                int uj_oszlop = oszl + oszlop_valtozas;
-                megnyit(tabla, uj_sor, uj_oszlop, rows, cols);
+        for (int sor_valt = -1; sor_valt <= 1; sor_valt++) {
+            for (int oszl_valt = -1; oszl_valt <= 1; oszl_valt++) {
+
+                if (sor_valt == 0 && oszl_valt == 0) continue;
+
+                int uj_sor = sor + sor_valt;
+                int uj_oszl = oszl + oszl_valt;
+
+                megnyit(tabla, uj_sor, uj_oszl, rows, cols);
             }
         }
     }
-    
+
     return 1;
 }
 
-//toggle funkcio a cellak flagelesere
+
+// ez a fuggveny egy flag-toggle, amely ki-be kapcsolja a flag-state-et egy mezon,
+// ha meg nincs megnyitva
 void flag_valt(Cella** tabla, int sor, int oszl, int rows, int cols) {
     if (sor < 0 || sor >= rows || oszl < 0 || oszl >= cols) {
         return;
     }
-    
+
     if (!tabla[sor][oszl].isOpen) {
         tabla[sor][oszl].isFlagged = !tabla[sor][oszl].isFlagged;
     }
 }
 
-//ha talal olyan cellak amely nem bomba es nincs megnyitva, akkor meg nincs megnyerve
+
+// ellenorzi, hogy minden nem-bomba mezo megvan-e nyitva. ha igen, gyozelem, return 1
 int gyozelem_check(Cella** tabla, int rows, int cols) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
@@ -111,4 +67,57 @@ int gyozelem_check(Cella** tabla, int rows, int cols) {
         }
     }
     return 1;
+}
+
+
+// ez a fuggveny a fo ciklust tartalmazza. kezeli a gyozelmet, veszteseget,
+// parancsokat es a kijelzest. a parancsokat a parancs modullal dolgozza fel, hogy ne legyen annyi
+// sor es modularisabb legyen a program
+void jatek(Beallitasok* b) {
+
+    Cella** tabla = tabla_gen(b->rows, b->cols);
+    bomba_gen(tabla, b->rows, b->cols, b->bombs);
+    korulotte_szamit(tabla, b->rows, b->cols);
+
+    time_t kezdes = time(NULL);
+    int vege = 0;
+    int gyozott = 0;
+
+    while (!vege) {
+
+        kepernyo_torol();
+        jatek_allapot(b, tabla, kezdes);
+
+        char muvelet;
+        int sor, oszlop;
+
+        char inputbuf[64];
+        printf("Parancs: ");
+
+        // beolvasas a parancs modulbol
+        if (!parancs_beolvas(inputbuf, 64, &muvelet, &sor, &oszlop)) {
+            continue;
+        }
+
+        // kilepes
+        if (muvelet == 'q') {
+            printf("Kilepes...\n");
+            vege = 1;
+            break;
+        }
+
+        // parancs vegrehajtasa
+        vege = parancs_vegrehajtasa(b, tabla, muvelet, sor, oszlop, &gyozott);
+    }
+
+    if (gyozott && strcmp(b->nev, "guest") != 0) {
+        int ido = (int)(time(NULL) - kezdes);
+        eredmeny_ment(b->nev, ido, b->rows * b->cols);
+        printf("Eredmeny elmentve!\n");
+    }
+
+    printf("Nyomj ENTER-t a folytatashoz...");
+    getchar(); getchar();
+
+    free_table(tabla, b->rows);
 }

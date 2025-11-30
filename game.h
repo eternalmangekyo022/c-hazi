@@ -2,16 +2,19 @@
 #define GAME_H
 
 #include "board.h"
+#include "parancs.h"
+#include <time.h>
 
-// megjelenitese
-void tabla_kiir(Cella** tabla, int rows, int cols, int mutasd_bombakat);
-void kepernyo_torol();
-
-// jatekmenet
+// mezo megnyitasa (rekurziv)
 int megnyit(Cella** tabla, int sor, int oszl, int rows, int cols);
+
+// flag valtas
 void flag_valt(Cella** tabla, int sor, int oszl, int rows, int cols);
 
-// gyozelem ellenorzes
+// gyozelem ellenorzese
 int gyozelem_check(Cella** tabla, int rows, int cols);
+
+// a jatek fo fuggvenye
+void jatek(Beallitasok* b);
 
 #endif
