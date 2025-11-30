@@ -25,15 +25,16 @@ Cella** tabla_gen(int rows, int cols) {
 // bombs parameterben jott
 void bomba_gen(Cella** tabla, int rows, int cols, int bombs) {
     srand(time(NULL));
-    int elhelyezve = 0;
+    int count = 0;
 
-    while (elhelyezve < bombs) {
-        int sor = rand() % rows;
-        int oszl = rand() % cols;
 
-        if (tabla[sor][oszl].isBomb == 0) {
-            tabla[sor][oszl].isBomb = 1;
-            elhelyezve++;
+    while (count < bombs) {
+        int r = rand() % rows;
+        int c = rand() % cols;
+
+        if (tabla[r][c].isBomb == 0) {
+            tabla[r][c].isBomb = 1;
+            count++;
         }
     }
 }
@@ -46,27 +47,28 @@ void korulotte_szamit(Cella** tabla, int rows, int cols) {
 
             if (tabla[sor][oszlop].isBomb) continue;
 
-            int bomba_db = 0;
+            int bomba_szam = 0;
 
-            for (int sor_valt = -1; sor_valt <= 1; sor_valt++) {
-                for (int oszl_valt = -1; oszl_valt <= 1; oszl_valt++) {
+            // szomszedok ellenorzese
 
-                    if (sor_valt == 0 && oszl_valt == 0) continue;
+            for (int sor_elteres = -1; sor_elteres <= 1; sor_elteres++) {
+                for (int oszlop_elteres = -1; oszlop_elteres <= 1; oszlop_elteres++) {
+                    if (sor_elteres == 0 && oszlop_elteres == 0) continue;
 
-                    int uj_sor = sor + sor_valt;
-                    int uj_oszl = oszlop + oszl_valt;
+                    int szomszed_sor = sor + sor_elteres;
 
-                    if (uj_sor >= 0 && uj_sor < rows &&
-                        uj_oszl >= 0 && uj_oszl < cols) 
-                    {
-                        if (tabla[uj_sor][uj_oszl].isBomb) {
-                            bomba_db++;
+                    int szomszed_oszlop = oszlop + oszlop_elteres;
+
+                    if (szomszed_sor >= 0 && szomszed_sor < rows && 
+                        szomszed_oszlop >= 0 && szomszed_oszlop < cols) {
+                        if (tabla[szomszed_sor][szomszed_oszlop].isBomb) {
+                            bomba_szam++;
                         }
                     }
                 }
             }
 
-            tabla[sor][oszlop].around = bomba_db;
+            tabla[sor][oszlop].around = bomba_szam;
         }
     }
 }

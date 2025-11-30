@@ -27,15 +27,14 @@ int megnyit(Cella** tabla, int sor, int oszl, int rows, int cols) {
     }
 
     if (tabla[sor][oszl].around == 0) {
-        for (int sor_valt = -1; sor_valt <= 1; sor_valt++) {
-            for (int oszl_valt = -1; oszl_valt <= 1; oszl_valt++) {
+        for (int sor_valtozas = -1; sor_valtozas <= 1; sor_valtozas++) {
+            for (int oszlop_valtozas = -1; oszlop_valtozas <= 1; oszlop_valtozas++) {
+                if (sor_valtozas == 0 && oszlop_valtozas == 0) continue;
+                int uj_sor = sor + sor_valtozas;
 
-                if (sor_valt == 0 && oszl_valt == 0) continue;
+                int uj_oszlop = oszl + oszlop_valtozas;
 
-                int uj_sor = sor + sor_valt;
-                int uj_oszl = oszl + oszl_valt;
-
-                megnyit(tabla, uj_sor, uj_oszl, rows, cols);
+                megnyit(tabla, uj_sor, uj_oszlop, rows, cols);
             }
         }
     }

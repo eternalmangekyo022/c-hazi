@@ -85,7 +85,7 @@ void tabla_kiir(Cella** tabla, int rows, int cols, int mutasd_bombakat) {
 
 //A fomenu csak kiirja a valaszthato opciokat. Main.c-ben kerul meghivasra ez is.
 void menu_kiir() {
-    printf("\n=== AKNAKERESO ===\n\n");
+    printf("\n~~~ AKNAKERESO ~~~\n\n");
     printf("1. Uj jatek\n");
     printf("2. Nev beallitasa\n");
     printf("3. Nehezseg\n");
@@ -99,7 +99,7 @@ void menu_kiir() {
 //ez a fuggvceny is csak kiirja a valaszthato nehezsegeket, konkret logikaja nincs. A parancskezelo
 // modul fogja feldolgozni majd a kivalasztott opciot
 void nehezseg_menu_kiir() {
-    printf("\n=== NEHEZSEG BEALLITASA ===\n\n");
+    printf("\n~~~ NEHEZSEG BEALLITASA ~~~\n\n");
     printf("1. Konnyu  (8x8, 10 akna)\n");
     printf("2. Kozepes (12x12, 20 akna)\n");
     printf("3. Nehez   (16x16, 40 akna)\n");

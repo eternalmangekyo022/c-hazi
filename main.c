@@ -8,6 +8,7 @@
 #include "debugmalloc.h"
 
 //uj forditas: gcc main.c ui.c parancs.c board.c game.c history.c -o aknakereso
+//./aknakereso
 
 // a kovetkezo fuggveny segit a nehezseg beallitasaban. rossz inputra warning.
 // nem tul komplex beolvasas.

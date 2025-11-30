@@ -3,17 +3,17 @@
 #include <stdlib.h>
 #include "debugmalloc.h"
 
-#define HISTORY_FILE "history.csv"
+#define FAJL_NEV "history.csv"
 
 
-// ellenorzi, hogy letezik e HOSTORY_FILE nevu fajl, es ha nem letrehoz egyet.
+// ellenorzi, hogy letezik e FAJL_NEV nevu fajl, es ha nem letrehoz egyet.
 // ha hibas a formatum, torli es letrehoz egyet, odafigyelve hogy a fejlecet csak 13 karakterig
 //olvassa.
 void history_init() {
-    FILE* f = fopen(HISTORY_FILE, "r");
+    FILE* f = fopen(FAJL_NEV, "r");
 
     if (f == NULL) {
-        f = fopen(HISTORY_FILE, "w");
+        f = fopen(FAJL_NEV, "w");
         if (f != NULL) {
             fprintf(f, "nev,ido,meret\n");
             fclose(f);
@@ -24,8 +24,8 @@ void history_init() {
     char sor[128];
     if (!fgets(sor, sizeof(sor), f) || strncmp(sor, "nev,ido,meret", 13) != 0) {
         fclose(f);
-        remove(HISTORY_FILE);
-        f = fopen(HISTORY_FILE, "w");
+        remove(FAJL_NEV);
+        f = fopen(FAJL_NEV, "w");
         if (f != NULL) {
             fprintf(f, "nev,ido,meret\n");
             fclose(f);
@@ -40,9 +40,9 @@ void history_init() {
 // hozzaadja a jatekos eredmenyet a fajlhoz. ha nem sikerul, csak kiirja,
 // hogy nem sikerult
 void eredmeny_ment(const char* nev, int ido, int meret) {
-    FILE* f = fopen(HISTORY_FILE, "a");
+    FILE* f = fopen(FAJL_NEV, "a");
     if (!f) {
-        printf("Nem sikerult megnyitni a history fajlt!\n");
+        printf("Nem sikerult menteni!\n");
         return;
     }
 
@@ -54,7 +54,7 @@ void eredmeny_ment(const char* nev, int ido, int meret) {
 // kiirja a fajlban levo osszes eredmenyt, ha van.
 // a fejlecet atugorjuk, hogy csak az adatok legyenek
 void eredmenyek_kiir() {
-    FILE* f = fopen(HISTORY_FILE, "r");
+    FILE* f = fopen(FAJL_NEV, "r");
     if (!f) {
         printf("Nincs elerheto eredmeny.\n");
         return;
@@ -65,13 +65,13 @@ void eredmenyek_kiir() {
     // fejlec atlepese
     fgets(sor, sizeof(sor), f);
 
-    printf("\n=== EREDMENYEK ===\n\n");
+    printf("\n~~~ EREDMENYEK ~~~\n\n");
     printf("%-20s %-10s %-10s\n", "Nev", "Ido (mp)", "Meret");
     printf("----------------------------------\n");
 
     int van = 0;
 
-    while (fgets(sor, sizeof(sor), f)) {
+    while (fgets(sor, sizeof(sor), f) != NULL) {
         char nev[50];
         int ido, meret;
 
@@ -82,7 +82,7 @@ void eredmenyek_kiir() {
     }
 
     if (!van) {
-        printf("Még nincsenek mentett eredmenyek.\n");
+        printf("Nincs meg eredmeny!\n");
     }
 
     printf("\n");
@@ -92,7 +92,7 @@ void eredmenyek_kiir() {
 
 // reseteli az eredmenyeket. torli a fajlt es letrehoz egyet a history_init segitsegevel.
 void eredmenyek_torol() {
-    remove(HISTORY_FILE);
+    remove(FAJL_NEV);
     history_init();
-    printf("Eredmenyek torolve.\n");
+    printf("Torolve!\n");
 }
